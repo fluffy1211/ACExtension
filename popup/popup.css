@@ -79,3 +79,55 @@ button {
 button:hover {
   transform: scale(1.05);
 }
+
+.volume-control {
+  margin-top: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 10px;
+  border-radius: 8px;
+  width: 100%;
+}
+
+label {
+  color: white;
+  font-size: 14px;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 70%;
+  height: 6px;
+  background: #d3d3d3;
+  border-radius: 5px;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #45930b;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #45930b;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+#volumeValue {
+  color: white;
+  min-width: 35px;
+  text-align: right;
+  font-size: 14px;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+}

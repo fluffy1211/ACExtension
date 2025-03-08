@@ -1,0 +1,23 @@
+{
+  "name": "acextension",
+  "version": "1.0.0",
+  "description": "Animal Crossing typing extension",
+  "main": "background.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "pretty": "prettier --write \"./**/*.{js,jsx,mjs,cjs,ts,tsx,json}\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fluffy1211/ACExtension.git"
+  },
+  "author": "Gabriel",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fluffy1211/ACExtension/issues"
+  },
+  "homepage": "https://github.com/fluffy1211/ACExtension#readme",
+  "devDependencies": {
+    "prettier": "^3.5.3"
+  }
+}

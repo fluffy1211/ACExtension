@@ -10,8 +10,9 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     // Broadcast the new state to all tabs
     chrome.tabs.query({}, function(tabs) {
       tabs.forEach(tab => {
-        // Skip chrome:// and edge:// pages (which can't run content scripts)
-        if (!tab.url.startsWith("chrome://") && 
+        // Make sure tab.url exists before trying to use it
+        if (tab.url && 
+            !tab.url.startsWith("chrome://") && 
             !tab.url.startsWith("edge://") && 
             !tab.url.startsWith("chrome-extension://") && 
             !tab.url.startsWith("extension://")) {
@@ -42,8 +43,9 @@ chrome.runtime.onInstalled.addListener(function() {
 // Optional: Handle tab updates to ensure new pages get the current state
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   if (changeInfo.status === 'complete' && isEnabled) {
-    // Skip chrome:// and edge:// pages
-    if (!tab.url.startsWith("chrome://") && 
+    // Make sure tab.url exists before trying to use it
+    if (tab.url &&
+        !tab.url.startsWith("chrome://") && 
         !tab.url.startsWith("edge://") && 
         !tab.url.startsWith("chrome-extension://") &&
         !tab.url.startsWith("extension://")) {

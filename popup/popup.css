@@ -8,7 +8,8 @@
 
 body {
   width: 300px;
-  font-family: 'AnimalCrossing', Arial, sans-serif;
+  /* Add fallback fonts in case the custom font fails to load */
+  font-family: 'AnimalCrossing', 'Comic Sans MS', 'Chalkboard SE', sans-serif;
   margin: 0;
   padding: 0;
   position: relative;
@@ -62,7 +63,8 @@ h1 {
 }
 
 button {
-  font-family: 'AnimalCrossing', Arial, sans-serif;
+  /* Add fallback fonts here as well */
+  font-family: 'AnimalCrossing', 'Comic Sans MS', 'Chalkboard SE', sans-serif;
   font-size: 16px;
   background-color: green;
   color: white;

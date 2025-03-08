@@ -3,7 +3,7 @@ let isEnabled = false;
 let audioContext = null;
 let soundBuffers = {};
 const soundFiles = [
-  'typing.mp3',
+  './sounds/typing.mp3',
 ]; // Update with your actual sound filenames
 
 // Initialize the audio context

@@ -1,8 +1,9 @@
 {
     "manifest_version": 3,
-    "name": "Animal Crossing Typing",
-    "version": "1.0",
-    "description": "Mathilde la plus belle",
+    "name": "AC Typing Extension",
+    "version": "1.0.1",
+    "description": "Make typing more fun with cute retro-style sound effects! Add charming keyboard sounds to your browsing experience.",
+    "author": "Gabriel",
     "action": {
       "default_popup": "popup/popup.html",
       "default_icon": {
@@ -14,8 +15,7 @@
     "permissions": [
       "activeTab",
       "scripting",
-      "storage",
-      "tabs"
+      "storage"
     ],
     "host_permissions": [
       "<all_urls>"

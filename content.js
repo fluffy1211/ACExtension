@@ -1,40 +1,40 @@
-// Add a flag to prevent duplicate initialization
+// Ajouter un drapeau pour empêcher l'initialisation en double
 if (typeof window.animalCrossingTypingInitialized === 'undefined') {
   window.animalCrossingTypingInitialized = true;
 
-  // Global variables
+  // Variables globales
   let isEnabled = false;
   let audioContext = null;
   let soundBuffers = {};
-  let volume = 0.7; // Default volume (0-1)
-  let activeSource = null; // Track the currently playing sound
+  let volume = 0.7; // Volume par défaut (0-1)
+  let activeSource = null; // Suivre le son en cours de lecture
   const soundFiles = [
     'typing.mp3',
   ];
 
-  // Create a gain node for volume control
+  // Créer un nœud de gain pour le contrôle du volume
   let gainNode = null;
   
-  // Initialize volume from storage
+  // Initialiser le volume depuis le stockage
   chrome.storage.local.get(['volume'], function(result) {
     if (result.volume !== undefined) {
       volume = result.volume / 100;
     }
   });
   
-  // Initialize the audio context
+  // Initialiser le contexte audio
   function initAudio() {
     try {
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
       
-      // Create a gain node for volume control
+      // Créer un nœud de gain pour le contrôle du volume
       gainNode = audioContext.createGain();
       gainNode.gain.value = volume;
       gainNode.connect(audioContext.destination);
       
-      // Modern browsers require user gesture to start audio
+      // Les navigateurs modernes nécessitent une interaction utilisateur pour démarrer l'audio
       if (audioContext.state === 'suspended') {
-        // Try to resume on any user interaction with the page
+        // Essayer de reprendre sur n'importe quelle interaction utilisateur avec la page
         const resumeAudioContext = () => {
           audioContext.resume().then(() => {
             document.removeEventListener('click', resumeAudioContext);
@@ -51,11 +51,11 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
         loadSounds();
       }
     } catch (e) {
-      console.error("Error initializing audio context:", e);
+      console.error("Erreur d'initialisation du contexte audio:", e);
     }
   }
 
-  // Load all sound files
+  // Charger tous les fichiers sons
   function loadSounds() {
     soundFiles.forEach(filename => {
       const url = chrome.runtime.getURL(`sounds/${filename}`);
@@ -77,7 +77,7 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
     });
   }
 
-  // Play a random sound with immediate stop of previous sound
+  // Jouer un son aléatoire avec arrêt immédiat du son précédent
   function playRandomSound() {
     if (!isEnabled) {
       return;
@@ -88,81 +88,81 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
       return;
     }
     
-    // Get a random sound file
+    // Obtenir un fichier son aléatoire
     const randomIndex = Math.floor(Math.random() * soundFiles.length);
     const soundFile = soundFiles[randomIndex];
     const buffer = soundBuffers[soundFile];
     
     if (buffer) {
       try {
-        // Stop any currently playing sound
+        // Arrêter tout son en cours de lecture
         if (activeSource) {
           try {
             activeSource.stop();
             activeSource.disconnect();
           } catch (e) {
-            // Ignore errors when stopping previous sounds
+            // Ignorer les erreurs lors de l'arrêt des sons précédents
           }
           activeSource = null;
         }
         
-        // Create a new buffer source
+        // Créer une nouvelle source de tampon
         const source = audioContext.createBufferSource();
         source.buffer = buffer;
         
-        // Connect through gain node for volume control
+        // Connecter via le nœud de gain pour le contrôle du volume
         source.connect(gainNode);
         
-        // Keep track of this source
+        // Suivre cette source
         activeSource = source;
         
-        // Define the sound duration (in seconds)
+        // Définir la durée du son (en secondes)
         const MAX_SOUND_DURATION = 0.4; 
         
-        // Get buffer information
+        // Obtenir des informations sur le tampon
         const bufferDuration = buffer.duration;
         
-        // Make sure we have valid buffer duration
+        // S'assurer que nous avons une durée de tampon valide
         if (bufferDuration <= 0) {
           return;
         }
         
-        // Calculate a better random start position - avoid silent parts
-        const goodPortionDuration = Math.min(bufferDuration, 0.5); // Use first half second maximum
+        // Calculer une meilleure position de départ aléatoire - éviter les parties silencieuses
+        const goodPortionDuration = Math.min(bufferDuration, 0.5); // Utiliser au maximum la première demi-seconde
         const randomStartPosition = Math.random() * goodPortionDuration;
         
-        // Ensure duration doesn't go beyond buffer end
+        // S'assurer que la durée ne dépasse pas la fin du tampon
         const playDuration = Math.min(MAX_SOUND_DURATION, bufferDuration - randomStartPosition);
         
-        // Play the sound
+        // Jouer le son
         source.start(0, randomStartPosition, playDuration);
         
-        // Handle completion - clean up references
+        // Gérer la fin - nettoyer les références
         source.onended = () => {
           if (activeSource === source) {
             activeSource = null;
           }
         };
         
-        // Safety cleanup - in case onended doesn't fire
+        // Nettoyage de sécurité - au cas où onended ne se déclenche pas
         setTimeout(() => {
           if (activeSource === source) {
             activeSource = null;
           }
-        }, playDuration * 1000 + 100); // Add 100ms buffer
+        }, playDuration * 1000 + 100); // Ajouter une marge de 100ms
         
       } catch (e) {
-        console.error("Error playing sound:", e);
+        console.error("Erreur de lecture du son:", e);
         activeSource = null;
       }
     } else {
-      console.warn(`Sound buffer not found for ${soundFile}`);
+      console.warn(`Tampon de son non trouvé pour ${soundFile}`);
     }
   }
 
-  // Listen for keydown events - without throttling, just immediate play
+  // Écouter les événements keydown - sans limitation, juste lecture immédiate
   function handleKeyDown(event) {
-    // Only play sounds for actual typing, not for modifier keys or function keys
+    // Jouer les sons uniquement pour la frappe réelle, pas pour les touches de modification ou de fonction
     const ignoredKeys = [
       'Shift', 'Control', 'Alt', 'Meta', 
       'CapsLock', 'Tab', 'Escape', 
@@ -177,24 +177,24 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
     }
   }
 
-  // Enable keyboard listener with a more aggressive approach
+  // Activer l'écouteur de clavier avec une approche plus agressive
   function enableKeyboardListener() {
-    // Remove any existing listeners first to avoid duplicates
+    // Supprimer d'abord tous les écouteurs existants pour éviter les doublons
     document.removeEventListener('keydown', handleKeyDown, true);
     window.removeEventListener('keydown', handleKeyDown, true);
     
-    // Add listeners to both document and window for better coverage
+    // Ajouter des écouteurs à la fois au document et à la fenêtre pour une meilleure couverture
     document.addEventListener('keydown', handleKeyDown, true);
     window.addEventListener('keydown', handleKeyDown, true);
     
-    // Also add to body if it exists
+    // Ajouter également au corps si il existe
     if (document.body) {
       document.body.removeEventListener('keydown', handleKeyDown, true);
       document.body.addEventListener('keydown', handleKeyDown, true);
     }
   }
 
-  // Disable keyboard listener
+  // Désactiver l'écouteur de clavier
   function disableKeyboardListener() {
     document.removeEventListener('keydown', handleKeyDown, true);
     window.removeEventListener('keydown', handleKeyDown, true);
@@ -204,7 +204,7 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
     }
   }
 
-  // Listen for messages from the background script
+  // Écouter les messages du script d'arrière-plan
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "toggle") {
       isEnabled = message.enabled;
@@ -223,7 +223,7 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
     } else if (message.action === "volumeChange") {
       volume = message.volume;
       
-      // Update gain node if it exists
+      // Mettre à jour le nœud de gain s'il existe
       if (gainNode) {
         gainNode.gain.value = volume;
       }
@@ -234,7 +234,7 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
     return true;
   });
 
-  // Initialize when DOM is ready
+  // Initialiser lorsque le DOM est prêt
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeExtension);
   } else {
@@ -242,7 +242,7 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
   }
 
   function initializeExtension() {
-    // Check if extension should be enabled
+    // Vérifier si l'extension doit être activée
     chrome.runtime.sendMessage({ action: "getState" }, (response) => {
       if (response && response.isEnabled) {
         isEnabled = true;
@@ -252,26 +252,26 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
     });
   }
 
-  // Make functions globally available for debugging
+  // Rendre les fonctions disponibles globalement pour le débogage
   window.animalCrossingTyping = {
     enable: function() {
       isEnabled = true;
       initAudio();
       enableKeyboardListener();
-      return "Animal Crossing Typing enabled!";
+      return "Animal Crossing Typing activé!";
     },
     disable: function() {
       isEnabled = false;
       disableKeyboardListener();
-      return "Animal Crossing Typing disabled!";
+      return "Animal Crossing Typing désactivé!";
     },
     status: function() {
-      return `Status: ${isEnabled ? 'ON' : 'OFF'}, Audio Context: ${audioContext ? audioContext.state : 'not initialized'}`;
+      return `Statut: ${isEnabled ? 'ON' : 'OFF'}, Contexte audio: ${audioContext ? audioContext.state : 'non initialisé'}`;
     },
     test: function() {
       if (!audioContext) initAudio();
       playRandomSound();
-      return "Testing sound playback";
+      return "Test de la lecture du son";
     }
   };
 }

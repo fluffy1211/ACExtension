@@ -1,17 +1,17 @@
 document.addEventListener('DOMContentLoaded', function() {
-  // Get button element
+  // Récupérer l'élément bouton
   const actionButton = document.getElementById('actionButton');
   const volumeSlider = document.getElementById('volumeSlider');
   const volumeValue = document.getElementById('volumeValue');
   
-  // Load current volume setting
+  // Charger le réglage de volume actuel
   chrome.storage.local.get(['volume'], function(result) {
-    const volume = result.volume !== undefined ? result.volume : 70;
+    const volume = result.volume !== undefined ? result.volume : 50;
     volumeSlider.value = volume;
     volumeValue.textContent = `${volume}%`;
   });
   
-  // Check current state when popup opens
+  // Vérifier l'état actuel à l'ouverture du popup
   chrome.runtime.sendMessage({action: "getState"}, function(response) {
     if (response && response.isEnabled) {
       actionButton.textContent = "ON";
@@ -22,9 +22,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   
-  // Add click event listener for power button
+  // Ajouter un écouteur d'événements pour le bouton d'alimentation
   actionButton.addEventListener('click', function() {
-    // Send a message to the background script to toggle state
+    // Envoyer un message au script d'arrière-plan pour basculer l'état
     chrome.runtime.sendMessage({action: "buttonClicked"}, function(response) {
       if (response && response.success) {
         if (response.isEnabled) {
@@ -38,14 +38,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
   
-  // Add volume slider event listener
+  // Ajouter un écouteur d'événements pour le curseur de volume
   volumeSlider.addEventListener('input', function() {
     const volume = this.value;
     volumeValue.textContent = `${volume}%`;
     
-    // Save volume to storage and notify content scripts
+    // Sauvegarder le volume dans le stockage et notifier les scripts de contenu
     chrome.storage.local.set({volume: volume}, function() {
-      // Broadcast volume change to all tabs
+      // Diffuser le changement de volume à tous les onglets
       chrome.tabs.query({}, function(tabs) {
         tabs.forEach(tab => {
           if (tab.url && 
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
               !tab.url.startsWith("extension://")) {
             chrome.tabs.sendMessage(tab.id, { 
               action: "volumeChange", 
-              volume: volume / 100 // Convert to 0-1 range for Web Audio API
+              volume: volume / 100 // Convertir à la plage 0-1 pour l'API Web Audio
             }).catch(() => {});
           }
         });

@@ -12,22 +12,6 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
     'typing.mp3',
   ];
 
-  // Modified logging function to not show visual indicators
-  function debugLog(message) {
-    if (false) { // Disable all debug logs
-      console.log(`[Animal Crossing Typing] ${message}`);
-    }
-  }
-
-  // Initialization indicator - silenced
-  debugLog('Content script loaded');
-  
-  // Disabled status indicator function
-  function showStatusIndicator(text, color) {
-    // Function disabled to remove visual indicators
-    return;
-  }
-
   // Create a gain node for volume control
   let gainNode = null;
   
@@ -35,13 +19,11 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
   chrome.storage.local.get(['volume'], function(result) {
     if (result.volume !== undefined) {
       volume = result.volume / 100;
-      debugLog(`Volume initialized to ${volume}`);
     }
   });
   
   // Initialize the audio context
   function initAudio() {
-    debugLog("Initializing Audio Context");
     try {
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
       
@@ -52,12 +34,9 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
       
       // Modern browsers require user gesture to start audio
       if (audioContext.state === 'suspended') {
-        debugLog("Audio context suspended, attempting to resume");
-        
         // Try to resume on any user interaction with the page
         const resumeAudioContext = () => {
           audioContext.resume().then(() => {
-            debugLog("Audio context resumed successfully");
             document.removeEventListener('click', resumeAudioContext);
             document.removeEventListener('keydown', resumeAudioContext);
             loadSounds();
@@ -78,25 +57,20 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
 
   // Load all sound files
   function loadSounds() {
-    debugLog("Loading sound files:", soundFiles);
     soundFiles.forEach(filename => {
       const url = chrome.runtime.getURL(`sounds/${filename}`);
-      debugLog("Fetching sound from URL:", url);
       
       fetch(url)
         .then(response => {
           if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
           }
-          debugLog(`Sound file ${filename} fetched successfully`);
           return response.arrayBuffer();
         })
         .then(arrayBuffer => {
-          debugLog(`Decoding audio data for ${filename}`);
           return audioContext.decodeAudioData(arrayBuffer);
         })
         .then(audioBuffer => {
-          debugLog(`Sound loaded successfully: ${filename}`);
           soundBuffers[filename] = audioBuffer;
         })
         .catch(error => console.error(`Error loading sound ${filename}:`, error));
@@ -106,12 +80,10 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
   // Play a random sound with immediate stop of previous sound
   function playRandomSound() {
     if (!isEnabled) {
-      debugLog("Sound disabled, not playing");
       return;
     }
     
     if (!audioContext) {
-      debugLog("Audio context not initialized, attempting to initialize");
       initAudio();
       return;
     }
@@ -145,7 +117,6 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
         activeSource = source;
         
         // Define the sound duration (in seconds)
-        // 0.2 seconds is a good balance - not too short, not too long
         const MAX_SOUND_DURATION = 0.4; 
         
         // Get buffer information
@@ -153,12 +124,10 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
         
         // Make sure we have valid buffer duration
         if (bufferDuration <= 0) {
-          debugLog("Invalid buffer duration, cannot play sound");
           return;
         }
         
         // Calculate a better random start position - avoid silent parts
-        // Most typing sounds have the best part at the beginning
         const goodPortionDuration = Math.min(bufferDuration, 0.5); // Use first half second maximum
         const randomStartPosition = Math.random() * goodPortionDuration;
         
@@ -167,7 +136,6 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
         
         // Play the sound
         source.start(0, randomStartPosition, playDuration);
-        debugLog(`Playing sound: ${soundFile} at position ${randomStartPosition.toFixed(2)}s for ${playDuration.toFixed(2)}s`);
         
         // Handle completion - clean up references
         source.onended = () => {
@@ -194,8 +162,6 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
 
   // Listen for keydown events - without throttling, just immediate play
   function handleKeyDown(event) {
-    debugLog(`Key pressed: ${event.key}`);
-    
     // Only play sounds for actual typing, not for modifier keys or function keys
     const ignoredKeys = [
       'Shift', 'Control', 'Alt', 'Meta', 
@@ -213,8 +179,6 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
 
   // Enable keyboard listener with a more aggressive approach
   function enableKeyboardListener() {
-    debugLog("Adding keydown listener to document and window");
-    
     // Remove any existing listeners first to avoid duplicates
     document.removeEventListener('keydown', handleKeyDown, true);
     window.removeEventListener('keydown', handleKeyDown, true);
@@ -228,13 +192,10 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
       document.body.removeEventListener('keydown', handleKeyDown, true);
       document.body.addEventListener('keydown', handleKeyDown, true);
     }
-    
-    debugLog("Keyboard listeners attached");
   }
 
   // Disable keyboard listener
   function disableKeyboardListener() {
-    debugLog("Removing keydown listener from document and window");
     document.removeEventListener('keydown', handleKeyDown, true);
     window.removeEventListener('keydown', handleKeyDown, true);
     
@@ -245,11 +206,8 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
 
   // Listen for messages from the background script
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    debugLog(`Message received: ${JSON.stringify(message)}`);
-    
     if (message.action === "toggle") {
       isEnabled = message.enabled;
-      debugLog(`Extension ${isEnabled ? 'enabled' : 'disabled'}`);
       
       if (isEnabled) {
         if (!audioContext) {
@@ -264,7 +222,6 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
       return true;
     } else if (message.action === "volumeChange") {
       volume = message.volume;
-      debugLog(`Volume changed to ${volume}`);
       
       // Update gain node if it exists
       if (gainNode) {
@@ -285,12 +242,8 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
   }
 
   function initializeExtension() {
-    debugLog("DOM is ready, initializing extension");
-    
     // Check if extension should be enabled
     chrome.runtime.sendMessage({ action: "getState" }, (response) => {
-      debugLog(`Initial state received: ${JSON.stringify(response)}`);
-      
       if (response && response.isEnabled) {
         isEnabled = true;
         initAudio();
@@ -321,6 +274,4 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
       return "Testing sound playback";
     }
   };
-
-  debugLog("Initialization complete");
 }

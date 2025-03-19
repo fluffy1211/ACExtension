@@ -6,7 +6,7 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
   let isEnabled = false;
   let audioContext = null;
   let soundBuffers = {};
-  let volume = 0.7; // Volume par défaut (0-1)
+  let volume = 0.5; // Volume par défaut (0-1)
   let activeSource = null; // Suivre le son en cours de lecture
   const soundFiles = [
     'typing.mp3',
@@ -88,9 +88,8 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
       return;
     }
     
-    // Obtenir un fichier son aléatoire
-    const randomIndex = Math.floor(Math.random() * soundFiles.length);
-    const soundFile = soundFiles[randomIndex];
+    // Utiliser directement le seul fichier son disponible
+    const soundFile = soundFiles[0];
     const buffer = soundBuffers[soundFile];
     
     if (buffer) {
@@ -204,6 +203,24 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
     }
   }
 
+  // Synchroniser l'état actuel avec le background script
+  function syncStateWithBackground() {
+    chrome.runtime.sendMessage({ action: "getState" }, (response) => {
+      if (response) {
+        if (isEnabled !== response.isEnabled) {
+          isEnabled = response.isEnabled;
+          
+          if (isEnabled) {
+            if (!audioContext) initAudio();
+            enableKeyboardListener();
+          } else {
+            disableKeyboardListener();
+          }
+        }
+      }
+    });
+  }
+
   // Écouter les messages du script d'arrière-plan
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "toggle") {
@@ -243,13 +260,21 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
 
   function initializeExtension() {
     // Vérifier si l'extension doit être activée
-    chrome.runtime.sendMessage({ action: "getState" }, (response) => {
-      if (response && response.isEnabled) {
-        isEnabled = true;
-        initAudio();
-        enableKeyboardListener();
+    syncStateWithBackground();
+    
+    // Ajouter des écouteurs pour les changements de visibilité de la page
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        // Resynchroniser l'état lors de la reprise de la visibilité
+        syncStateWithBackground();
       }
     });
+    
+    // Ajouter un écouteur pour les événements de reprise du système
+    window.addEventListener('focus', syncStateWithBackground);
+    
+    // Vérifier périodiquement l'état (filet de sécurité)
+    setInterval(syncStateWithBackground, 60000); // Vérifier toutes les minutes
   }
 
   // Rendre les fonctions disponibles globalement pour le débogage
@@ -272,6 +297,10 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
       if (!audioContext) initAudio();
       playRandomSound();
       return "Test de la lecture du son";
+    },
+    sync: function() {
+      syncStateWithBackground();
+      return "État synchronisé avec le background";
     }
   };
 }

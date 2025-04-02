@@ -1,21 +1,43 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <title>Animal Crossing Typing</title>
   <link rel="stylesheet" href="popup.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
   <div class="container">
-    <div class="center">
-      <h1>Animal Crossing Typing</h1>
-      <button id="actionButton">ON</button>
+    <header>
+      <h1 class="modern-title">AC Typing Sounds</h1>
+    </header>
+    
+    <main class="center">
+      <div class="toggle-container">
+        <label class="leaf-toggle">
+          <input type="checkbox" id="toggleSwitch">
+          <span class="leaf-slider"></span>
+        </label>
+      </div>
       
       <div class="volume-control">
-        <label for="volumeSlider">Volume:</label>
-        <input type="range" id="volumeSlider" min="0" max="100" value="50">
-        <span id="volumeValue">50%</span>
+        <label for="volumeSlider" class="modern-label">
+          <span>Volume</span>
+          <span class="volume-icon">🔊</span>
+        </label>
+        <div class="slider-container">
+          <input type="range" id="volumeSlider" min="0" max="100" value="50">
+          <span id="volumeValue" class="modern-value">50%</span>
+        </div>
       </div>
-    </div>
+    </main>
+    
+    <footer>
+      <a href="#" id="privacyLink" class="modern-link">Privacy Practices</a>
+      <a href="https://ko-fi.com/fluffy57465" id="kofiLink" class="kofi-button" target="_blank">
+        <img src="../icons/ko-fi.png" alt="Support me on Ko-fi" class="kofi-icon">
+      </a>
+    </footer>
   </div>
   <script src="popup.js"></script>
 </body>

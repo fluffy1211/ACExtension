@@ -7,13 +7,15 @@
 }
 
 body {
-  width: 300px;
+  width: 320px;
   /* Ajouter des polices de secours au cas où la police personnalisée ne se charge pas */
   font-family: 'AnimalCrossing', 'Comic Sans MS', 'Chalkboard SE', sans-serif;
   margin: 0;
   padding: 0;
   position: relative;
   overflow: hidden;
+  color: #fff;
+  background-color: #82c9ff;
 }
 
 body::before {
@@ -27,15 +29,27 @@ body::before {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  filter: blur(3px);
+  filter: blur(2px) brightness(1.05);
   z-index: -1;
 }
 
 .container {
-  padding: 15px;
-  background-color: transparent;
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+  padding: 20px;
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(5px);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   position: relative;
   z-index: 1;
+}
+
+header {
+  text-align: center;
+  padding-bottom: 15px;
+  margin-bottom: 10px;
 }
 
 .center {
@@ -44,12 +58,252 @@ body::before {
   justify-content: center;
   align-items: center;
   text-align: center;
+  flex-grow: 1;
+  gap: 25px;
 }
 
 h1 {
   font-size: 28px;
   color: #fff8dc;
-  margin-bottom: 15px;
+  margin: 0 0 10px 0;
+  text-shadow: 
+    2px 2px 0 #45930b,   
+    -1px -1px 0 #45930b,
+    1px -1px 0 #45930b,
+    -1px 1px 0 #45930b;
+  letter-spacing: 0.7px;
+  line-height: 1.2;
+  transform: scale(1, 1.05);
+  padding: 5px 10px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.toggle-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 5px;
+  width: 90%;
+}
+
+.toggle-label {
+  font-size: 18px;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Leaf Toggle Switch Styling */
+.leaf-toggle {
+  position: relative;
+  display: inline-block;
+  width: 120px;
+  height: 60px;
+  cursor: pointer;
+}
+
+.leaf-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.leaf-slider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 30px;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+.leaf-slider:before {
+  position: absolute;
+  content: "";
+  height: 40px; /* Reduced from 46px */
+  width: 40px; /* Reduced from 46px */
+  left: 10px; /* Adjusted for smaller size */
+  bottom: 10px; /* Adjusted for smaller size */
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+  background-image: url('../icons/leaf.png');
+  background-size: 75%; /* Reduced from 80% */
+  background-position: center;
+  background-repeat: no-repeat;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+input:checked + .leaf-slider {
+  background-color: #45930b;
+}
+
+input:focus + .leaf-slider {
+  box-shadow: 0 0 3px #45930b;
+}
+
+input:checked + .leaf-slider:before {
+  transform: translateX(60px) rotate(360deg);
+}
+
+/* Remove the Toggle Text Styling since we're removing the ON/OFF text */
+.toggle-text {
+  display: none;
+}
+
+/* Remove old toggle button styles */
+.toggle-button {
+  display: none;
+}
+
+.volume-control {
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  background-color: rgba(255, 255, 255, 0.25);
+  padding: 15px;
+  border-radius: 12px;
+  width: 90%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.volume-icon {
+  margin-left: 8px;
+  font-size: 16px;
+}
+
+.slider-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+  margin-top: 2px;
+}
+
+label {
+  color: white;
+  font-size: 16px;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  letter-spacing: 0.3px;
+  font-weight: 500;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 80%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 10px;
+  outline: none;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #45930b;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  background: #55a31b;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #45930b;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.1);
+  background: #55a31b;
+}
+
+#volumeValue {
+  color: white;
+  min-width: 40px;
+  text-align: right;
+  font-size: 14px;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+  font-weight: bold;
+}
+
+footer {
+  margin-top: 25px;
+  text-align: center;
+  font-size: 12px;
+  padding-top: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+footer a {
+  color: #fff;
+  text-decoration: none;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.2);
+  transition: all 0.2s ease;
+}
+
+footer a:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Ko-fi button styling */
+.kofi-button {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  padding: 0 !important;
+  background-color: transparent !important;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  transition: transform 0.2s ease;
+}
+
+.kofi-button:hover {
+  transform: translateY(-2px) scale(1.1);
+  background-color: transparent !important;
+}
+
+.kofi-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Modern Text Styling */
+.modern-title {
+  font-size: 28px;
+  color: #fff8dc;
+  margin: 0 0 10px 0;
   text-shadow: 
     2px 2px 0 #45930b,   
     -1px -1px 0 #45930b,
@@ -60,74 +314,44 @@ h1 {
   transform: scale(1, 1.05);
   padding: 5px 10px;
   border-radius: 12px;
+  font-weight: 600;
 }
 
-button {
-  /* Ajouter des polices de secours ici aussi */
-  font-family: 'AnimalCrossing', 'Comic Sans MS', 'Chalkboard SE', sans-serif;
-  font-size: 16px;
-  background-color: green;
+.modern-label {
   color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  margin-top: 10px;
-  transition: all 0.3s ease;
-}
-
-button:hover {
-  transform: scale(1.05);
-}
-
-.volume-control {
-  margin-top: 15px;
+  font-size: 16px;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
-  gap: 10px;
-  background-color: rgba(255, 255, 255, 0.2);
-  padding: 10px;
-  border-radius: 8px;
-  width: 100%;
+  letter-spacing: 0.5px;
+  font-weight: 500;
 }
 
-label {
+.modern-value {
   color: white;
-  font-size: 14px;
-  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
-}
-
-input[type="range"] {
-  -webkit-appearance: none;
-  width: 70%;
-  height: 6px;
-  background: #d3d3d3;
-  border-radius: 5px;
-  outline: none;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  background: #45930b;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-input[type="range"]::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  background: #45930b;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-#volumeValue {
-  color: white;
-  min-width: 35px;
+  min-width: 40px;
   text-align: right;
-  font-size: 14px;
+  font-size: 15px;
   text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+  font-weight: bold;
+  letter-spacing: 0.5px;
+}
+
+.modern-link {
+  color: #fff;
+  text-decoration: none;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.2);
+  transition: all 0.2s ease;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.modern-link:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }

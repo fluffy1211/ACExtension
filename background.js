@@ -37,6 +37,13 @@ function broadcastState() {
 
 // Écouter les messages du popup ou des scripts de contenu
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
+  if (message.action === "openPrivacyPage") {
+    chrome.tabs.create({
+      url: chrome.runtime.getURL("privacy_practices.md")
+    });
+    return true;
+  }
+  
   if (message.action === "buttonClicked") {
     // Basculer l'état d'activation
     isEnabled = !isEnabled;

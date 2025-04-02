@@ -1,8 +1,22 @@
 document.addEventListener('DOMContentLoaded', function() {
-  // Récupérer l'élément bouton
-  const actionButton = document.getElementById('actionButton');
+  // Replace actionButton with toggleSwitch
+  const toggleSwitch = document.getElementById('toggleSwitch');
   const volumeSlider = document.getElementById('volumeSlider');
   const volumeValue = document.getElementById('volumeValue');
+  const privacyLink = document.getElementById('privacyLink');
+  const kofiLink = document.getElementById('kofiLink');
+  
+  // Handle privacy link click
+  privacyLink.addEventListener('click', function(e) {
+    e.preventDefault();
+    chrome.runtime.sendMessage({action: "openPrivacyPage"});
+  });
+  
+  // Handle Ko-fi link click
+  kofiLink.addEventListener('click', function(e) {
+    // No need to prevent default as we want it to open in a new tab
+    // The target="_blank" attribute in the HTML takes care of that
+  });
   
   // Charger le réglage de volume actuel
   chrome.storage.local.get(['volume'], function(result) {
@@ -14,26 +28,18 @@ document.addEventListener('DOMContentLoaded', function() {
   // Vérifier l'état actuel à l'ouverture du popup
   chrome.runtime.sendMessage({action: "getState"}, function(response) {
     if (response && response.isEnabled) {
-      actionButton.textContent = "ON";
-      actionButton.style.backgroundColor = "green";
+      toggleSwitch.checked = true;
     } else {
-      actionButton.textContent = "OFF";
-      actionButton.style.backgroundColor = "red";
+      toggleSwitch.checked = false;
     }
   });
   
-  // Ajouter un écouteur d'événements pour le bouton d'alimentation
-  actionButton.addEventListener('click', function() {
+  // Ajouter un écouteur d'événements pour le toggle switch
+  toggleSwitch.addEventListener('change', function() {
     // Envoyer un message au script d'arrière-plan pour basculer l'état
     chrome.runtime.sendMessage({action: "buttonClicked"}, function(response) {
       if (response && response.success) {
-        if (response.isEnabled) {
-          actionButton.textContent = "ON";
-          actionButton.style.backgroundColor = "green";
-        } else {
-          actionButton.textContent = "OFF";
-          actionButton.style.backgroundColor = "red";
-        }
+        toggleSwitch.checked = response.isEnabled;
       }
     });
   });

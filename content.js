@@ -7,14 +7,15 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
   let audioContext = null;
   let soundBuffers = {};
   let volume = 0.5; // Volume par défaut (0-1)
-  let activeSource = null; // Suivre le son en cours de lecture
+  let activeSources = []; // Track multiple active sound sources
   const soundFiles = [
     'typing.mp3',
   ];
   
   // Throttling configuration
-  const MIN_TIME_BETWEEN_SOUNDS = 60; // Minimum time between sounds in milliseconds
+  const MIN_TIME_BETWEEN_SOUNDS = 40; // Minimum time between sounds in milliseconds
   let lastSoundTimestamp = 0; // Track the last time a sound was played
+  const MAX_CONCURRENT_SOUNDS = 4; // Maximum number of sounds playing at once (balanced for good sound)
 
   // Créer un nœud de gain pour le contrôle du volume
   let gainNode = null;
@@ -81,7 +82,7 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
     });
   }
 
-  // Jouer un son avec arrêt immédiat du son précédent
+  // Jouer un son avec gestion intelligente des sources multiples
   function playRandomSound() {
     if (!isEnabled) {
       return;
@@ -98,36 +99,68 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
     
     if (buffer) {
       try {
-        // Arrêter tout son en cours de lecture
-        stopActiveSource();
+        // Clean up finished sources before adding new ones
+        cleanupFinishedSources();
+        
+        // Calculate dynamic volume based on number of active sources to prevent cacophony
+        const dynamicVolume = Math.max(0.3, volume / Math.sqrt(activeSources.length + 1));
+        
+        // If we have too many concurrent sounds, remove older ones more aggressively
+        while (activeSources.length >= MAX_CONCURRENT_SOUNDS) {
+          const oldestSource = activeSources.shift();
+          if (oldestSource && oldestSource.source) {
+            try {
+              // Faster fade out when we have too many sounds
+              const fadeOutTime = 0.15; // 150ms fade out
+              const currentTime = audioContext.currentTime;
+              
+              // Always fade out when we're at the limit
+              oldestSource.gainNode.gain.setValueAtTime(oldestSource.gainNode.gain.value, currentTime);
+              oldestSource.gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + fadeOutTime);
+              
+              setTimeout(() => {
+                try {
+                  oldestSource.source.stop();
+                  oldestSource.source.disconnect();
+                  oldestSource.gainNode.disconnect();
+                } catch (e) {
+                  // Ignore errors if already stopped
+                }
+              }, fadeOutTime * 1000);
+            } catch (e) {
+              // Ignore errors if already stopped
+            }
+          }
+        }
         
         // Créer une nouvelle source de tampon
         const source = audioContext.createBufferSource();
         source.buffer = buffer;
         
-        // Connecter via le nœud de gain pour le contrôle du volume
-        source.connect(gainNode);
+        // Create individual gain node for this source for independent volume control
+        const sourceGainNode = audioContext.createGain();
+        sourceGainNode.gain.value = dynamicVolume;
         
-        // Suivre cette source
-        activeSource = source;
+        // Connecter via le nœud de gain pour le contrôle du volume
+        source.connect(sourceGainNode);
+        sourceGainNode.connect(audioContext.destination);
         
         // Obtenir des informations sur le tampon
         const bufferDuration = buffer.duration;
         
         // S'assurer que nous avons une durée de tampon valide
         if (bufferDuration <= 0) {
-          activeSource = null; // Nettoyer si le tampon n'est pas valide
           return;
         }
 
         // Définir des zones "sûres" connues dans le fichier audio
         // qui garantissent un son de qualité (ajustez selon votre fichier audio)
         const guaranteedSections = [
-          { start: 0.1, duration: 0.2 },
+          { start: 0.0, duration: 0.2 },
           { start: 0.4, duration: 0.25 },
-          { start: 0.7, duration: 0.2 },
-          { start: 1.1, duration: 0.2 },
-          { start: 1.5, duration: 0.25 }
+          { start: 0.6, duration: 0.2 },
+          { start: 1.0, duration: 0.2 },
+          { start: 1.4, duration: 0.25 }
         ];
         
         // Ajouter plus de sections si le fichier est plus long
@@ -156,27 +189,38 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
         // Légère variation de hauteur pour chaque frappe (naturel)
         source.playbackRate.value = 0.97 + (Math.random() * 0.06);
         
+        // Create source tracking object
+        const sourceTracker = {
+          source: source,
+          gainNode: sourceGainNode,
+          startTime: Date.now(),
+          duration: typingSoundDuration * 1000
+        };
+        
+        // Add to active sources
+        activeSources.push(sourceTracker);
+        
         // Jouer le son depuis la position calculée avec une durée fixe
-        // Cette approche garantit que nous aurons toujours un son complet
         source.start(0, randomStart, typingSoundDuration);
         
         // Gérer la fin - nettoyer les références
         source.onended = () => {
-          if (activeSource === source) {
-            activeSource = null;
+          const index = activeSources.findIndex(s => s.source === source);
+          if (index !== -1) {
+            activeSources.splice(index, 1);
           }
         };
         
         // Nettoyage de sécurité
         setTimeout(() => {
-          if (activeSource === source) {
-            activeSource = null;
+          const index = activeSources.findIndex(s => s.source === source);
+          if (index !== -1) {
+            activeSources.splice(index, 1);
           }
         }, typingSoundDuration * 1000 + 100);
         
       } catch (e) {
         console.error("Erreur de lecture du son:", e);
-        activeSource = null;
       }
     } else {
       // Si le tampon n'est pas encore chargé, essayer de le recharger
@@ -185,23 +229,41 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
     }
   }
 
-  // Helper function to safely stop and clean up the active audio source
-  function stopActiveSource() {
-    if (activeSource) {
+  // Helper function to clean up finished audio sources
+  function cleanupFinishedSources() {
+    const currentTime = Date.now();
+    activeSources = activeSources.filter(sourceTracker => {
+      const isFinished = currentTime - sourceTracker.startTime > sourceTracker.duration;
+      if (isFinished) {
+        try {
+          sourceTracker.source.disconnect();
+          sourceTracker.gainNode.disconnect();
+        } catch (e) {
+          // Ignore errors if already disconnected
+        }
+      }
+      return !isFinished;
+    });
+  }
+
+  // Helper function to safely stop and clean up all active audio sources
+  function stopAllActiveSources() {
+    activeSources.forEach(sourceTracker => {
       try {
-        activeSource.stop();
+        sourceTracker.source.stop();
       } catch (e) {
         // Ignorer les erreurs si la source a déjà été arrêtée
       }
       
       try {
-        activeSource.disconnect();
+        sourceTracker.source.disconnect();
+        sourceTracker.gainNode.disconnect();
       } catch (e) {
         // Ignorer les erreurs si la source a déjà été déconnectée
       }
-      
-      activeSource = null;
-    }
+    });
+    
+    activeSources = [];
   }
 
   // Écouteur d'événements clavier amélioré pour une meilleure fiabilité
@@ -219,8 +281,11 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
     if (!ignoredKeys.includes(event.key)) {
       const currentTime = Date.now();
       
+      // Dynamic throttling: increase delay when more sounds are active
+      const dynamicThrottle = activeSources.length > 2 ? MIN_TIME_BETWEEN_SOUNDS * 1.5 : MIN_TIME_BETWEEN_SOUNDS;
+      
       // Check if enough time has passed since the last sound
-      if (currentTime - lastSoundTimestamp >= MIN_TIME_BETWEEN_SOUNDS) {
+      if (currentTime - lastSoundTimestamp >= dynamicThrottle) {
         // Vérifier que le son est réellement disponible avant de tenter de le jouer
         if (Object.keys(soundBuffers).length === 0) {
           // Si les sons ne sont pas encore chargés, les charger immédiatement
@@ -267,8 +332,8 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
       document.body.removeEventListener('keydown', handleKeyDown, true);
     }
     
-    // Nettoyer toute source audio active lors de la désactivation
-    stopActiveSource();
+    // Nettoyer toutes les sources audio actives lors de la désactivation
+    stopAllActiveSources();
   }
 
   // Synchroniser l'état actuel avec le background script
@@ -308,10 +373,12 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
     } else if (message.action === "volumeChange") {
       volume = message.volume;
       
-      // Mettre à jour le nœud de gain s'il existe
-      if (gainNode) {
-        gainNode.gain.value = volume;
-      }
+      // Mettre à jour le volume pour toutes les sources actives
+      activeSources.forEach(sourceTracker => {
+        if (sourceTracker.gainNode) {
+          sourceTracker.gainNode.gain.value = volume;
+        }
+      });
       
       sendResponse({ success: true });
       return true;
@@ -333,8 +400,8 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
     // Ajouter des écouteurs pour les changements de visibilité de la page
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
-        // Clean up activeSource when page becomes hidden
-        stopActiveSource();
+        // Clean up all active sources when page becomes hidden
+        stopAllActiveSources();
       } else if (document.visibilityState === 'visible') {
         // Resynchroniser l'état lors de la reprise de la visibilité
         syncStateWithBackground();
@@ -349,7 +416,7 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
   }
 
   // Clean up on page unload
-  window.addEventListener('beforeunload', stopActiveSource);
+  window.addEventListener('beforeunload', stopAllActiveSources);
 
   // Rendre les fonctions disponibles globalement pour le débogage
   window.animalCrossingTyping = {
@@ -377,7 +444,7 @@ if (typeof window.animalCrossingTypingInitialized === 'undefined') {
       return "État synchronisé avec le background";
     },
     stopSound: function() {
-      stopActiveSource();
+      stopAllActiveSources();
       return "All sounds stopped";
     },
     getThrottleDelay: function() {
